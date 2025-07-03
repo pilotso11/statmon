@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Status</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        .status-HEALTHY { background-color: #28a745; } /* Green */
+        .status-UNHEALTHY { background-color: #dc3545; } /* Red */
+        .status-WARNING { background-color: #ffc107; } /* Yellow */
+        .status-UNKNOWN { background-color: #6c757d; } /* Gray */
+        .card-header.status-UNHEALTHY { background-color: rgba(220, 53, 69, 0.2); }
+        .card-header.status-WARNING { background-color: rgba(255, 193, 7, 0.2); }
+        .item-card { margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">System Status Dashboard</h1>
+        <p>Last Updated: <span id="lastUpdated">{{ .Timestamp.Format "2006-01-02 15:04:05 MST" }}</span></p>
+        <div id="accordion">
+            {{range .Items}}
+            <div class="card item-card">
+                <div class="card-header {{ .Status }}" id="heading{{.Name | replaceNonAlphaNum}}">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        {{if .Icon}}
+                            {{if hasPrefix .Icon "http"}}
+                                <img src="{{.Icon}}" alt="{{.Name}} icon" class="mr-2" style="width:24px; height:24px; vertical-align: middle;">
+                            {{else if $.IconBaseURL}}
+                                <img src="{{$.IconBaseURL}}{{.Icon}}" alt="{{.Name}} icon" class="mr-2" style="width:24px; height:24px; vertical-align: middle;">
+                            {{end}}
+                        {{end}}
+                        <span class="status-indicator {{ .Status }}"></span>
+                        <button class="btn btn-link" data-toggle="collapse" data-target="#collapse{{.Name | replaceNonAlphaNum}}" aria-expanded="true" aria-controls="collapse{{.Name | replaceNonAlphaNum}}" style="padding-left: 0;">
+                            {{.Name}} ({{.Type}}) - <strong class="{{ .Status }}">{{.Status}}</strong>
+                        </button>
+                    </h5>
+                </div>
+
+                <div id="collapse{{.Name | replaceNonAlphaNum}}" class="collapse show" aria-labelledby="heading{{.Name | replaceNonAlphaNum}}" data-parent="#accordion">
+                    <div class="card-body">
+                        <p><strong>Details:</strong> {{.Details}}</p>
+                        <p><strong>Last Checked:</strong> {{.LastCheckTime.Format "2006-01-02 15:04:05 MST"}}</p>
+                        {{if .Threshold}}
+                        <p><strong>Threshold:</strong>
+                            {{if eq .Type "Disk"}}{{printf "%.2f%%" .Threshold}}{{end}}
+                            {{if eq .Type "CPU"}}{{printf "%.2f%%" .Threshold}}{{end}}
+                            {{if eq .Type "Memory"}}{{printf "%.2f%%" .Threshold}}{{end}}
+                            {{if eq .Type "Application" }}
+                                {{ with .AppConfig.Threshold }}
+                                    Max Response: {{.MaxResponseTimeMS}}ms
+                                    {{if .BodyContains}} | Must Contain: "{{.BodyContains}}"{{end}}
+                                    {{if .BodyNotContains}} | Must Not Contain: "{{.BodyNotContains}}"{{end}}
+                                {{ end }}
+                            {{end}}
+                        </p>
+                        {{end}}
+                         {{if .PathOrURL}}
+                            <p><strong>Target:</strong> {{.PathOrURL}}</p>
+                         {{end}}
+                    </div>
+                </div>
+            </div>
+            {{else}}
+            <p>No items are currently being monitored.</p>
+            {{end}}
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Optional: Auto-refresh the page (though WebSockets or SSE would be better for live updates)
+        // setTimeout(() => {
+        //     location.reload();
+        // }, {{ .RefreshIntervalSeconds | default 30 }} * 1000);
+
+        // Logic to expand unhealthy items by default (or items that were previously expanded)
+        document.addEventListener('DOMContentLoaded', function () {
+            const items = document.querySelectorAll('.card.item-card');
+            items.forEach(card => {
+                const header = card.querySelector('.card-header');
+                const collapseDiv = card.querySelector('.collapse');
+                if (header && (header.classList.contains('status-UNHEALTHY') || header.classList.contains('status-WARNING'))) {
+                    // Make sure bootstrap's collapse 'show' class is added and aria-expanded is true
+                    if (collapseDiv && !collapseDiv.classList.contains('show')) {
+                        collapseDiv.classList.add('show');
+                    }
+                    const button = header.querySelector('button[data-toggle="collapse"]');
+                    if (button) {
+                        button.setAttribute('aria-expanded', 'true');
+                    }
+                } else if (collapseDiv && collapseDiv.classList.contains('show')) {
+                    // For healthy items, ensure they are collapsed by default unless already shown (e.g. by user interaction)
+                    // This simple version just collapses healthy ones. A more complex version would remember user state.
+                     collapseDiv.classList.remove('show');
+                     const button = header.querySelector('button[data-toggle="collapse"]');
+                     if (button) {
+                         button.setAttribute('aria-expanded', 'false');
+                     }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

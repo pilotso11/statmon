@@ -1,0 +1,63 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+  # iconBaseURL: "/static/icons/" # Base URL for serving local/default icons
+
+monitorIntervalSeconds: 10 # Check every 10 seconds
+
+logging:
+  format: "text" # "text" for human-readable console, "json" for structured
+  # level: "info"  # Optional: debug, info, warn, error (not fully implemented yet beyond parsing)
+
+cpu:
+  enabled: true
+  threshold: 90.0 # percent
+  icon: "cpu.svg" # material icon name or path to custom icon
+
+memory:
+  enabled: true
+  threshold: 85.0 # percent
+  icon: "memory.svg" # material icon name or path to custom icon
+
+disks:
+  - name: "Root Partition"
+    path: "/"
+    threshold: 75.0 # percent
+    icon: "storage.svg"
+  - name: "Home Directory"
+    path: "/home"
+    threshold: 80.0 # percent
+    icon: "folder_home.svg"
+
+applications:
+  - name: "Google"
+    url: "https://www.google.com/healthz" # Example, google doesn't have /healthz
+    expectedStatusCode: 200 # For google.com itself, it's 200. For a real /healthz, it's often 200 or 204
+    timeoutSeconds: 5
+    iconFetch: true # Try to get favicon.ico
+    # icon: "google_icon.png" # Optional: specify an icon URL or path
+    threshold:
+      maxResponseTimeMS: 1000
+      # bodyContains: "OK"
+      # bodyNotContains: "Error"
+
+  - name: "Example API"
+    url: "https://api.example.com/status"
+    expectedStatusCode: 200
+    timeoutSeconds: 10
+    icon: "api.svg" # Specify a default or custom icon
+    threshold:
+      maxResponseTimeMS: 500
+      bodyContains: "UP"
+
+webhooks:
+  - name: "Test Webhook"
+    url: "https://webhook.site/d8c2fc73-1094-477a-a19b-e1897238c05c" # Replace with your actual test URL
+    method: "POST"
+    # Headers can be added if needed, e.g., for authentication
+    # headers:
+    #   Content-Type: "application/json"
+    #   Authorization: "Bearer your_token"
+    # BodyTemplate: '{"text":"Alert! Monitored item {{.ItemName}} is {{.Status}}. Details: {{.Details}}"}'
+    # The BodyTemplate would be processed by Go's text/template package.
+    # We'll implement this templating later. For now, just the URL.
