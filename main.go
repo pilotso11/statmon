@@ -432,7 +432,7 @@ func saveConfig() error {
 	if err != nil { return fmt.Errorf("failed to marshal config to YAML: %w", err) }
 	if err = os.WriteFile(configFilePath, yamlData, 0644); err != nil { return fmt.Errorf("failed to write config file %s: %w", configFilePath, err) }
 	zlog.Info().Str("path", configFilePath).Msg("Configuration saved successfully")
-	initializeMonitoredItems() // This needs to be within the same mutex lock if it modifies MonitoredItems
+	initializeMonitoredItems() // Mutex lock is already held by saveConfig; no additional locking is needed
 	zlog.Info().Msg("Monitored items re-initialized after config change.")
 	return nil
 }
