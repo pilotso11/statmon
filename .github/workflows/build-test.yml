@@ -22,9 +22,9 @@ jobs:
 
     - name: Test
       run: go test -v ./...
-      # Add -race flag for race detection if appropriate for your tests, e.g.:
-      # run: go test -race -v ./...
-
+    # Add -race flag for race detection if appropriate for your tests, e.g.:
+    # run: go test -race -v ./...
+    #
     # Optional: Upload artifact (the built binary)
     # - name: Upload go-monitor binary
     #   uses: actions/upload-artifact@v3
