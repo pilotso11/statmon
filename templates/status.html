@@ -30,7 +30,7 @@
         <div id="accordion">
             {{range .Items}}
             <div class="card item-card">
-                <div class="card-header status-{{ .Status }}" id="heading{{.Name | replaceNonAlphaNum}}">
+                <div class="card-header {{ .Status }}" id="heading{{.Name | replaceNonAlphaNum}}">
                     <h5 class="mb-0 d-flex align-items-center">
                         {{if .Icon}}
                             {{if hasPrefix .Icon "http"}}
