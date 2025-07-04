@@ -1,0 +1,40 @@
+[Unit]
+Description=Go Monitor Application
+After=network.target
+
+[Service]
+Type=simple
+User=youruser      # Replace with the user you want to run the service as (e.g., a dedicated 'gomonitor' user)
+Group=yourgroup    # Replace with the group for the user
+
+WorkingDirectory=/opt/go-monitor  # Replace with the actual path to your application
+ExecStart=/opt/go-monitor/go-monitor # Replace with the actual path to your application binary
+
+Restart=on-failure
+RestartSec=5s
+
+# Environment variables for configuration (override defaults or config file)
+# Environment="MONITOR_SERVER_PORT=8090"
+# Environment="MONITOR_DISKS_0_PATH=/mnt/data"
+# Environment="MONITOR_DISKS_0_THRESHOLD=85.0"
+# (Refer to Viper's environment variable binding rules: e.g. CONFIG_SERVER_PORT or MONITOR_SERVER_PORT)
+# For Viper with AutomaticEnv and Replacer for '.', env vars like:
+# SERVER_PORT=8090
+# CPU_THRESHOLD=92.0
+# DISKS_0_PATH="/var/log"
+# DISKS_0_THRESHOLD=70
+# APPLICATIONS_0_URL="http://myotherservice/health"
+
+# Standard output and error logging
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening (optional, but recommended)
+# PrivateTmp=true
+# ProtectSystem=full
+# NoNewPrivileges=true
+# ProtectHome=true
+# ReadWritePaths=/opt/go-monitor/config # If config is writable and external
+
+[Install]
+WantedBy=multi-user.target

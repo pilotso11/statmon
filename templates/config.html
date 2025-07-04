@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Management</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Configuration Management</h1>
+            <a href="/" class="btn btn-info">View Status Page</a>
+        </div>
+
+        <!-- Display Current Configuration -->
+        <h2>Current Monitored Items</h2>
+
+        <div class="mb-4">
+            <h4>CPU</h4>
+            <p>Enabled: {{.Config.CPU.Enabled}}, Threshold: {{.Config.CPU.Threshold}}%</p>
+        </div>
+        <div class="mb-4">
+            <h4>Memory</h4>
+            <p>Enabled: {{.Config.Memory.Enabled}}, Threshold: {{.Config.Memory.Threshold}}%</p>
+        </div>
+
+        <div class="mb-4">
+            <h4>Disks</h4>
+            {{if .Config.Disks}}
+                <ul class="list-group">
+                    {{range $idx, $disk := .Config.Disks}}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><strong>{{$disk.Name}}</strong> (Path: {{$disk.Path}}, Threshold: {{$disk.Threshold}}%)</span>
+                        <form action="/config/remove/disk" method="POST" style="display: inline;">
+                            <input type="hidden" name="path" value="{{$disk.Path}}">
+                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                        </form>
+                    </li>
+                    {{end}}
+                </ul>
+            {{else}}
+                <p>No disks configured.</p>
+            {{end}}
+        </div>
+
+        <div class="mb-4">
+            <h4>Applications</h4>
+            {{if .Config.Applications}}
+                <ul class="list-group">
+                    {{range $idx, $app := .Config.Applications}}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><strong>{{$app.Name}}</strong> (URL: {{$app.URL}}, Expected Code: {{$app.ExpectedStatusCode}})</span>
+                        <form action="/config/remove/application" method="POST" style="display: inline;">
+                            <input type="hidden" name="name" value="{{$app.Name}}">
+                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                        </form>
+                    </li>
+                    {{end}}
+                </ul>
+            {{else}}
+                <p>No applications configured.</p>
+            {{end}}
+        </div>
+        <hr>
+
+        <!-- Forms to Add New Configuration -->
+        <h2>Add New Monitor</h2>
+
+        <!-- Add Disk Form -->
+        <div class="card mb-4">
+            <div class="card-header">Add Disk Monitor</div>
+            <div class="card-body">
+                <form action="/config/add/disk" method="POST">
+                    <div class="form-group">
+                        <label for="diskName">Disk Name</label>
+                        <input type="text" class="form-control" id="diskName" name="name" placeholder="e.g., Root Partition" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="diskPath">Path</label>
+                        <input type="text" class="form-control" id="diskPath" name="path" placeholder="/ or /var/log" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="diskThreshold">Threshold (%)</label>
+                        <input type="number" class="form-control" id="diskThreshold" name="threshold" step="0.1" min="0" max="100" placeholder="75" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="diskIcon">Icon Filename (optional)</label>
+                        <input type="text" class="form-control" id="diskIcon" name="icon" placeholder="storage.svg">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Disk Monitor</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Application Form -->
+        <div class="card mb-4">
+            <div class="card-header">Add Application Monitor</div>
+            <div class="card-body">
+                <form action="/config/add/application" method="POST">
+                    <div class="form-group">
+                        <label for="appName">Application Name</label>
+                        <input type="text" class="form-control" id="appName" name="name" placeholder="e.g., My Web App" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appURL">URL</label>
+                        <input type="url" class="form-control" id="appURL" name="url" placeholder="https://myapp.com/health" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appExpectedStatusCode">Expected Status Code</label>
+                        <input type="number" class="form-control" id="appExpectedStatusCode" name="expectedStatusCode" value="200" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appTimeoutSeconds">Timeout (seconds)</label>
+                        <input type="number" class="form-control" id="appTimeoutSeconds" name="timeoutSeconds" value="5" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appIcon">Icon URL or Filename (optional)</label>
+                        <input type="text" class="form-control" id="appIcon" name="icon" placeholder="api.svg or https://myapp.com/icon.png">
+                    </div>
+                    <div class="form-check mb-2">
+                        <input type="checkbox" class="form-check-input" id="appIconFetch" name="iconFetch" value="true">
+                        <label class="form-check-label" for="appIconFetch">Attempt to fetch /favicon.ico if icon not specified</label>
+                    </div>
+                    <hr>
+                    <h5>Thresholds (Optional)</h5>
+                    <div class="form-group">
+                        <label for="appMaxResponseTimeMS">Max Response Time (ms)</label>
+                        <input type="number" class="form-control" id="appMaxResponseTimeMS" name="threshold.maxResponseTimeMS" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="appBodyContains">Response Body Must Contain</label>
+                        <input type="text" class="form-control" id="appBodyContains" name="threshold.bodyContains">
+                    </div>
+                     <div class="form-group">
+                        <label for="appBodyNotContains">Response Body Must NOT Contain</label>
+                        <input type="text" class="form-control" id="appBodyNotContains" name="threshold.bodyNotContains">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Application Monitor</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
